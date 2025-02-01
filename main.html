@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defect Record</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 900px;
+            margin: auto;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table, th, td {
+            border: 1px solid #e1e1e1;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            font-size: 14px;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        td {
+            background-color: #f9f9f9;
+        }
+        td:hover {
+            background-color: #f1f1f1;
+        }
+        button {
+            padding: 12px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+            width: 180px;
+            text-align: center;
+        }
+        button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+        .buttons-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .defect-buttons-container {
+            display: grid;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            width: 30%;
+            height: 300px;
+            margin-top: 20px;
+        }
+        .charts-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Defect Record Table</h1>
+
+        <!-- Defect Buttons arranged in 4x3 Grid (4 Defects x 3 Lines) -->
+        <div class="defect-buttons-container">
+            <div class="buttons-container">
+                <button onclick="recordDefect('Defect1', 0)">Defect1 - Line 1</button>
+                <button onclick="recordDefect('Defect1', 1)">Defect1 - Line 2</button>
+                <button onclick="recordDefect('Defect1', 2)">Defect1 - Line 3</button>
+            </div>
+            <div class="buttons-container">
+                <button onclick="recordDefect('Defect2', 0)">Defect2 - Line 1</button>
+                <button onclick="recordDefect('Defect2', 1)">Defect2 - Line 2</button>
+                <button onclick="recordDefect('Defect2', 2)">Defect2 - Line 3</button>
+            </div>
+            <div class="buttons-container">
+                <button onclick="recordDefect('Defect3', 0)">Defect3 - Line 1</button>
+                <button onclick="recordDefect('Defect3', 1)">Defect3 - Line 2</button>
+                <button onclick="recordDefect('Defect3', 2)">Defect3 - Line 3</button>
+            </div>
+            <div class="buttons-container">
+                <button onclick="recordDefect('Defect4', 0)">Defect4 - Line 1</button>
+                <button onclick="recordDefect('Defect4', 1)">Defect4 - Line 2</button>
+                <button onclick="recordDefect('Defect4', 2)">Defect4 - Line 3</button>
+            </div>
+        </div>
+
+        <!-- Bar Charts for each line's defect distribution arranged horizontally -->
+        <div class="charts-row">
+            <div class="chart-container">
+                <canvas id="chartLine1"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartLine2"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartLine3"></canvas>
+            </div>
+        </div>
+
+        <!-- Defect Table -->
+        <table id="defectTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Line 1</th>
+                    <th>Line 2</th>
+                    <th>Line 3</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let currentRow = 0;  // Track the current row, excluding the header row
+
+        // Initialize counters for each defect (defects x lines)
+        let defectCounts = {
+            Defect1: [0, 0, 0], // [Line1, Line2, Line3]
+            Defect2: [0, 0, 0],
+            Defect3: [0, 0, 0],
+            Defect4: [0, 0, 0]
+        };
+
+        // Initialize the charts for each line
+        let charts = {
+            line1: new Chart(document.getElementById('chartLine1'), {
+                type: 'bar',
+                data: {
+                    labels: ['Defect1', 'Defect2', 'Defect3', 'Defect4'],
+                    datasets: [{
+                        label: 'Defects - Line 1',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#FF0000', '#0000FF', '#00FF00', '#FFA500']  // Red, Blue, Green, Orange
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Count'
+                            }
+                        }
+                    }
+                }
+            }),
+            line2: new Chart(document.getElementById('chartLine2'), {
+                type: 'bar',
+                data: {
+                    labels: ['Defect1', 'Defect2', 'Defect3', 'Defect4'],
+                    datasets: [{
+                        label: 'Defects - Line 2',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#FF0000', '#0000FF', '#00FF00', '#FFA500']  // Red, Blue, Green, Orange
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Count'
+                            }
+                        }
+                    }
+                }
+            }),
+            line3: new Chart(document.getElementById('chartLine3'), {
+                type: 'bar',
+                data: {
+                    labels: ['Defect1', 'Defect2', 'Defect3', 'Defect4'],
+                    datasets: [{
+                        label: 'Defects - Line 3',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#FF0000', '#0000FF', '#00FF00', '#FFA500']  // Red, Blue, Green, Orange
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Count'
+                            }
+                        }
+                    }
+                }
+            })
+        };
+
+	function recordDefect(defectName, lineNumber) {
+	    const currentDate = new Date().toLocaleDateString();
+	    const currentTime = new Date().toLocaleTimeString();
+
+	// Update defect counts
+        defectCounts[defectName][lineNumber]++;
+        
+        // Add a new row to the defect table
+        const table = document.getElementById('defectTable').getElementsByTagName('tbody')[0];
+        const newRow = table.insertRow();
+
+        newRow.innerHTML = `
+            <td>${currentDate}</td>
+            <td>${currentTime}</td>
+            <td>${lineNumber === 0 ? defectName : ''}</td>
+            <td>${lineNumber === 1 ? defectName : ''}</td>
+            <td>${lineNumber === 2 ? defectName : ''}</td>
+        `;
+
+        // Update the histogram chart
+        updateHistogramChart(lineNumber);
+
+	    // Get table row data in a format suitable for the backend
+	    const row = {
+	        date: currentDate,
+	        time: currentTime,
+	        line1: lineNumber === 0 ? defectName : "",
+	        line2: lineNumber === 1 ? defectName : "",
+	        line3: lineNumber === 2 ? defectName : ""
+	    };
+
+	    // Send data to the backend
+	    fetch('http://127.0.0.1:5000/save-defect', {
+	        method: 'POST',
+	        headers: {
+	            'Content-Type': 'application/json'
+	        },
+	        body: JSON.stringify(row)
+	    })
+	    .then(response => response.json())
+	    .then(data => console.log(data.message))
+	    .catch(error => console.error('Error:', error));
+	
+	    // Continue with the rest of the table update logic...
+	}
+
+
+	
+
+        function updateHistogramChart(lineNumber) {
+            const chartData = [
+                defectCounts.Defect1[lineNumber],
+                defectCounts.Defect2[lineNumber],
+                defectCounts.Defect3[lineNumber],
+                defectCounts.Defect4[lineNumber]
+            ];
+
+            if (lineNumber === 0) {
+                charts.line1.data.datasets[0].data = chartData;
+                charts.line1.update();
+            } else if (lineNumber === 1) {
+                charts.line2.data.datasets[0].data = chartData;
+                charts.line2.update();
+            } else {
+                charts.line3.data.datasets[0].data = chartData;
+                charts.line3.update();
+            }
+        }
+    </script>
+
+</body>
+</html>

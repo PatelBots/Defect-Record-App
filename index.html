@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defect Recorder</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Green line at the top */
+        .header-line {
+            height: 10px;
+            background-color: #4CAF50;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .column {
+            flex: 1;
+            margin: 0 10px;
+        }
+
+        button {
+            padding: 12px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* Dropdown and add defect button */
+        .defect-input {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        select {
+            padding: 12px;
+            width: 50%;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+
+        .add-defect-btn {
+            padding: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .add-defect-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Green line at the top -->
+    <div class="header-line"></div>
+
+    <div class="container">
+        <h1>Defect Recorder</h1>
+
+        <!-- Row for Labels (Left, Center, Right) -->
+        <div class="row">
+            <div class="column">
+                <span class="label">Left</span>
+            </div>
+            <div class="column">
+                <span class="label">Center</span>
+            </div>
+            <div class="column">
+                <span class="label">Right</span>
+            </div>
+        </div>
+
+        <!-- Rows for Defect Buttons -->
+        <div class="row" id="buttonsContainer">
+            <div class="column" id="leftColumn">
+                <button onclick="recordDefect('Defect01', 'Left')">Defect01</button>
+                <button onclick="recordDefect('Defect02', 'Left')">Defect02</button>
+                <button onclick="recordDefect('Defect03', 'Left')">Defect03</button>
+                <button onclick="recordDefect('Defect04', 'Left')">Defect04</button>
+            </div>
+            <div class="column" id="centerColumn">
+                <button onclick="recordDefect('Defect01', 'Center')">Defect01</button>
+                <button onclick="recordDefect('Defect02', 'Center')">Defect02</button>
+                <button onclick="recordDefect('Defect03', 'Center')">Defect03</button>
+                <button onclick="recordDefect('Defect04', 'Center')">Defect04</button>
+            </div>
+            <div class="column" id="rightColumn">
+                <button onclick="recordDefect('Defect01', 'Right')">Defect01</button>
+                <button onclick="recordDefect('Defect02', 'Right')">Defect02</button>
+                <button onclick="recordDefect('Defect03', 'Right')">Defect03</button>
+                <button onclick="recordDefect('Defect04', 'Right')">Defect04</button>
+            </div>
+        </div>
+
+        <!-- Dropdown and add defect button -->
+        <div class="defect-input">
+            <select id="defectDropdown">
+                <option value="">Select a defect</option>
+                <option value="Defect05">Defect05</option>
+                <option value="Defect06">Defect06</option>
+                <option value="Defect07">Defect07</option>
+            </select>
+            <button class="add-defect-btn" onclick="addSelectedDefect()">Add Defect Button</button>
+        </div>
+        
+    </div>
+
+    <script>
+    const defectCounts = {};
+    const defectLimits = {
+        "Defect01": 5,
+        "Defect02": 5,
+        "Defect03": 5,
+        "Defect05": 5,
+        "Defect06": 3,
+        "Defect07": 3,
+        "Defect08": 3
+    };
+
+    function recordDefect(defectName, columnName) {
+        const currentDate = new Date().toLocaleDateString();
+        const currentTime = new Date().toLocaleTimeString();
+
+        const row = {
+            date: currentDate,
+            time: currentTime,
+            left: columnName === 'Left' ? defectName : "",
+            center: columnName === 'Center' ? defectName : "",
+            right: columnName === 'Right' ? defectName : ""
+        };
+
+        console.log(`Defect recorded: ${JSON.stringify(row)}`);
+
+        // Update defect count
+        if (!defectCounts[defectName]) {
+            defectCounts[defectName] = 0;
+        }
+        defectCounts[defectName] += 1;
+
+        // Update button color based on defect count
+        updateButtonColor(defectName, columnName);
+
+        // Send data to Google Sheets
+        sendDataToGoogleSheet(row);
+    }
+
+    function updateButtonColor(defectName, columnName) {
+        const count = defectCounts[defectName];
+        const maxLimit = defectLimits[defectName];
+
+        if (count % 5 === 0 && count !== 0) {
+            const colorShift = Math.floor(count / 5);
+            const redIntensity = Math.min(255, Math.floor(255 * (colorShift / 5)));
+            const greenIntensity = Math.max(0, 255 - redIntensity);
+
+            const buttonColor = `rgb(${redIntensity}, ${greenIntensity}, 0)`;
+
+            const buttons = document.querySelectorAll(`#${columnName.toLowerCase()}Column button`);
+            buttons.forEach(button => {
+                if (button.textContent === defectName) {
+                    button.style.backgroundColor = buttonColor;
+                }
+            });
+        }
+    }
+
+    function addSelectedDefect() {
+    const defectName = document.getElementById('defectDropdown').value;
+
+    if (!defectName) {
+        alert("Please select a defect from the dropdown.");
+        return;
+    }
+
+    // Check if the defect button already exists
+    const existingButtons = document.querySelectorAll(`#buttonsContainer button`);
+    for (const button of existingButtons) {
+        if (button.textContent === defectName) {
+            alert("This defect button already exists.");
+            return;
+        }
+    }
+
+    const columns = ['leftColumn', 'centerColumn', 'rightColumn'];
+
+    columns.forEach(columnId => {
+        const column = document.getElementById(columnId);
+        const newButton = document.createElement('button');
+
+        // Set button text and onclick behavior
+        newButton.textContent = defectName;
+        const columnName = columnId.replace('Column', '').charAt(0).toUpperCase() + columnId.replace('Column', '').slice(1);
+        newButton.onclick = () => recordDefect(defectName, columnName);
+
+        // Append the button to the respective column
+        column.appendChild(newButton);
+    });
+
+    // Reset the dropdown
+    document.getElementById('defectDropdown').value = '';
+}
+
+
+    function sendDataToGoogleSheet(row) {
+        google.script.run.sendDataToGoogleSheet(row);
+    }
+
+</script>
+
+
+</body>
+</html>

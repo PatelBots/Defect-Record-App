@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defect Histogram with Actions</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        canvas {
+            max-width: 1200px; /* Larger graph width */
+            max-height: 600px; /* Larger graph height */
+            margin: 20px auto;
+        }
+
+        .action-input-container {
+            margin: 20px auto;
+            text-align: center;
+            max-width: 800px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 70%;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Defect Histogram with Actions</h1>
+    <canvas id="histogramChart"></canvas>
+
+    <div class="action-input-container">
+        <input type="text" id="actionInput" placeholder="Enter action taken for defects">
+        <button onclick="submitAction()">Submit Action</button>
+    </div>
+
+    <script>
+        let histogramChart;
+
+        // Initialize the histogram chart
+        function initializeChart(labels, leftData, centerData, rightData) {
+            const ctx = document.getElementById('histogramChart').getContext('2d');
+
+            histogramChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Left',
+                            data: leftData,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        },
+                        {
+                            label: 'Center',
+                            data: centerData,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        },
+                        {
+                            label: 'Right',
+                            data: rightData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Defects Per Line (Real-Time Updates)',
+                        },
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Defect Types',
+                            },
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Count',
+                            },
+                            beginAtZero: true,
+                        },
+                    },
+                },
+            });
+        }
+
+        // Fetch defect data and update the chart
+        function fetchDefectDataAndUpdateChart() {
+            google.script.run.withSuccessHandler(updateHistogram).getDefectData();
+        }
+
+        function updateHistogram(defectCounts) {
+            const labels = Object.keys(defectCounts.Left || {}); // Assuming all lines have the same defect labels
+            const leftData = labels.map(label => defectCounts.Left[label] || 0);
+            const centerData = labels.map(label => defectCounts.Center[label] || 0);
+            const rightData = labels.map(label => defectCounts.Right[label] || 0);
+
+            if (!histogramChart) {
+                initializeChart(labels, leftData, centerData, rightData);
+            } else {
+                histogramChart.data.labels = labels;
+                histogramChart.data.datasets[0].data = leftData;
+                histogramChart.data.datasets[1].data = centerData;
+                histogramChart.data.datasets[2].data = rightData;
+
+                histogramChart.update();
+            }
+        }
+
+        // Handle action submission
+        function submitAction() {
+    const actionInput = document.getElementById('actionInput').value.trim();
+
+    if (actionInput === "") {
+        alert("Please enter an action before submitting.");
+        return;
+    }
+
+    // Send action to Apps Script
+    google.script.run
+        .withSuccessHandler(actionSubmissionResult)
+        .withFailureHandler(handleActionSubmissionError)
+        .addActionToSheet(actionInput);
+}
+
+function actionSubmissionResult(response) {
+    if (response.success) {
+        alert("Action successfully recorded!");
+        document.getElementById('actionInput').value = ""; // Clear input field
+    } else {
+        alert(`Failed to record action: ${response.message}`);
+    }
+}
+
+function handleActionSubmissionError(error) {
+    // Display a failure dialog box with error details
+    alert("An unexpected error occurred while submitting the action. Please try again.\nError: " + error.message);
+}
+
+        // Fetch defect data initially and set an interval for updates
+        fetchDefectDataAndUpdateChart();
+        setInterval(fetchDefectDataAndUpdateChart, 5000); // Update every 5 seconds
+    </script>
+</body>
+</html>
